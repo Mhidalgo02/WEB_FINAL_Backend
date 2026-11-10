@@ -1,0 +1,22 @@
+Options -Indexes -MultiViews
+RewriteEngine On
+
+# Preserve bearer authentication when Apache dispatches to PHP.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Dispatch API routes to LavaLust; this service does not host the React frontend.
+RewriteRule ^index\.php(?:/.*)?$ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+
+<FilesMatch "(^\.|\.(?:env|ini|log|sql|pem|key)$|^(?:composer|package)(?:-lock)?\.(?:json|lock)$)">
+    Require all denied
+</FilesMatch>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Cache-Control "no-store"
