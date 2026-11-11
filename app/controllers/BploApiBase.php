@@ -11,6 +11,27 @@ class BploApiBase extends Controller
         parent::__construct();
         $this->call->library('api');
         $this->call->database();
+        
+        // Add CORS headers
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = array_filter(array_map('trim', explode(',', 
+            getenv('ALLOW_ORIGIN') ?: 'https://web-final-frontend-cvnz.onrender.com,http://localhost:5173,http://localhost:4173'
+        )));
+        
+        if ($origin && in_array($origin, $allowedOrigins, true)) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+            header('Vary: Origin');
+        }
+        
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Authorization, Content-Type');
+        header('Access-Control-Allow-Credentials: true');
+        
+        // Handle preflight requests
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(204);
+            exit;
+        }
     }
 
     protected function fail($message, $code = 400)
