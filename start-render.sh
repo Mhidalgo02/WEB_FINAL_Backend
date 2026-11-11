@@ -11,6 +11,13 @@ for setting in DB_HOST DB_PORT DB_NAME DB_USERNAME DB_PASSWORD APP_KEY DB_SSL_CA
     if [ -z "$value" ]; then echo "Missing Render environment variable: $setting" >&2; exit 1; fi
 done
 if [ "${#APP_KEY}" -lt 32 ]; then echo 'APP_KEY needs at least 32 characters.' >&2; exit 1; fi
+
+
+if [ -f /etc/secrets/ca.pem ]; then
+  cp /etc/secrets/ca.pem /usr/local/share/aiven-ca.pem
+  chmod 644 /usr/local/share/aiven-ca.pem
+fi
+
 if [ ! -s "$DB_SSL_CA" ]; then echo 'Aiven CA file is missing; add ca.pem as a Render secret file.' >&2; exit 1; fi
 
 # Render mounts the persistent disk before this script runs.
@@ -23,8 +30,3 @@ chmod 700 runtime/private_uploads runtime/private_payments runtime/session
 printf 'Listen %s\n' "$PORT" > /etc/apache2/ports.conf
 sed -i "s/__PORT__/$PORT/g" /etc/apache2/sites-available/000-default.conf
 exec apache2-foreground
-
-if [ -f /etc/secrets/ca.pem ]; then
-  cp /etc/secrets/ca.pem /usr/local/share/aiven-ca.pem
-  chmod 644 /usr/local/share/aiven-ca.pem
-fi
