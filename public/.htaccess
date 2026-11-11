@@ -1,11 +1,27 @@
 Options -Indexes -MultiViews
+DirectoryIndex index.php
+
 RewriteEngine On
 
-# Preserve bearer authentication when Apache dispatches to PHP.
-RewriteCond %{HTTP:Authorization} .
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+# Allow only the deployed React frontend.
+SetEnvIfNoCase Origin "^https://web-final-frontend-cvnz\.onrender\.com$" BPLO_ALLOWED_ORIGIN=$0
 
-# Dispatch API routes to LavaLust; this service does not host the React frontend.
+# CORS response headers.
+Header always set Access-Control-Allow-Origin "%{BPLO_ALLOWED_ORIGIN}e" env=BPLO_ALLOWED_ORIGIN
+Header always merge Vary "Origin"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" env=BPLO_ALLOWED_ORIGIN
+Header always set Access-Control-Allow-Headers "Authorization, Content-Type, Accept" env=BPLO_ALLOWED_ORIGIN
+Header always set Access-Control-Max-Age "600" env=BPLO_ALLOWED_ORIGIN
+
+# Answer preflight without loading LavaLust.
+RewriteCond %{REQUEST_METHOD} =OPTIONS
+RewriteRule ^ - [R=204,END]
+
+# Preserve bearer authentication.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Preserve existing LavaLust routing.
 RewriteRule ^index\.php(?:/.*)?$ - [L]
 
 RewriteCond %{REQUEST_FILENAME} -f [OR]
@@ -17,6 +33,7 @@ RewriteRule ^(.*)$ index.php/$1 [QSA,L]
 <FilesMatch "(^\.|\.(?:env|ini|log|sql|pem|key)$|^(?:composer|package)(?:-lock)?\.(?:json|lock)$)">
     Require all denied
 </FilesMatch>
+
 Header always set X-Content-Type-Options "nosniff"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set Cache-Control "no-store"
