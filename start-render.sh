@@ -24,3 +24,7 @@ printf 'Listen %s\n' "$PORT" > /etc/apache2/ports.conf
 sed -i "s/__PORT__/$PORT/g" /etc/apache2/sites-available/000-default.conf
 exec apache2-foreground
 
+if [ -f /etc/secrets/ca.pem ]; then
+  cp /etc/secrets/ca.pem /usr/local/share/aiven-ca.pem
+  chmod 644 /usr/local/share/aiven-ca.pem
+fi
